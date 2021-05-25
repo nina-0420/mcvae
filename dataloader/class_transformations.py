@@ -312,29 +312,31 @@ class TransformationGenerator(object):
             print('\n NOT IMPLEMENTED')
 
             # # This is not debugged!
-            # if self.img_type == 'input':
-            #
-            #     # Applying the transformations
-            #     transformation = self.spatial_transformation_augmented()
-            #     # Resampling the image
-            #     output_image_sitk = self.get_resampled_images(image, transformation)
-            #     # convert to np array
-            #     output_image_np = utils.sitk_np.sitk_to_np(output_image_sitk, self.np_pixel_type)
-            #     # Postprocessing the numpy array
-            #     if self.post_processing_np:
-            #         output_image_np = self.intensity_postprocessing_mr_random(output_image_np)
-            #
-            # elif self.img_type == 'label':
-            #
-            #     # Applying the transformations
-            #     transformation = self.spatial_transformation_augmented()
-            #     # Resampling the image
-            #     output_image_sitk = self.get_resampled_images(image, transformation)
-            #     # convert to np array
-            #     output_image_np = utils.sitk_np.sitk_to_np(output_image_sitk, self.np_pixel_type)
-            #     # Postprocessing the numpy array
-            #     if self.post_processing_np:
-            #         output_image_np = self.intensity_postprocessing_mr_random(output_image_np)
+# =============================================================================
+#             if self.img_type == 'input':
+#             
+#                  # Applying the transformations
+#                  transformation = self.spatial_transformation_augmented()
+#                  # Resampling the image
+#                  output_image_sitk = self.get_resampled_images(image, transformation)
+#                  # convert to np array
+#                  output_image_np = utils.sitk_np.sitk_to_np(output_image_sitk, self.np_pixel_type)
+#                  # Postprocessing the numpy array
+#                  if self.post_processing_np:
+#                      output_image_np = self.intensity_postprocessing_mr_random(output_image_np)
+#             
+#                  elif self.img_type == 'label':
+#             
+#                  # Applying the transformations
+#                      transformation = self.spatial_transformation_augmented()
+#                  # Resampling the image
+#                      output_image_sitk = self.get_resampled_images(image, transformation)
+#                  # convert to np array
+#                      output_image_np = utils.sitk_np.sitk_to_np(output_image_sitk, self.np_pixel_type)
+#                  # Postprocessing the numpy array
+#                  if self.post_processing_np:
+#                      output_image_np = self.intensity_postprocessing_mr_random(output_image_np)
+# =============================================================================
 
         else:
 

@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+Created on Mon Apr 12 21:33:13 2021
+
+@author: scnc
+"""
+# -*- coding: utf-8 -*-
+"""
 Created on Sat Mar 27 11:58:07 2021
 
 @author: scnc
@@ -13,7 +19,7 @@ import glob
 import SimpleITK as sitk
 import cv2
 from dataloader.class_transformations import TransformationGenerator
-import pdb
+from skimage.transform import resize
 
 def scalRadius(img, scale):
     x = img[int(img.shape[0]/2),:,:].sum(1)
@@ -41,10 +47,12 @@ def load_dicom(filename):
     # Convert the image to a  numpy array
     np_img = sitk.GetArrayFromImage(itkimage)
     np_img = np.array((np_img - np.min(np_img))/(np.max(np_img) - np.min(np_img))*255, dtype=np.int8)  # Normalize between 0 and 255
+    #IMG_PX_SIZE=128##
+    #np_img= resize(np_img,(IMG_PX_SIZE,IMG_PX_SIZE),anti_aliasing=True)##
     return np_img[0]
 
 
-class MM(data.Dataset):
+class TC(data.Dataset):
     """ Multi-Modal Dataset.
         Args:
         dir_imgs (string): Root directory of dataset where images exist.
@@ -57,14 +65,14 @@ class MM(data.Dataset):
 
     def __init__(self,
                 dir_imgs,
-                fundus_img_size,
+                tagging_img_size,
                 sax_img_size,
                 args,
                 ids_set
                 ):
 
         self.img_names = []
-        self.fundus_img_size = fundus_img_size
+        self.tagging_img_size = tagging_img_size
         self.sax_img_size = sax_img_size
         self.path_imgs_sax = []
         self.crop_c_min = []
@@ -74,11 +82,15 @@ class MM(data.Dataset):
         self.roi_length = []
         self.mtdt = []
         # fundus image paths
-        self.path_imgs_fundus = []
+        self.path_imgs_tagging = []
         # number fo participants
         self.num_parti = 0
 
-
+        self.pad_input_tagging = TransformationGenerator(output_size=self.tagging_img_size,
+                                             output_spacing=[1, 1, 1],
+                                             training=False,
+                                             pixel_margin_ratio = 0.3,
+                                             normalize = 0) # It could 0 or  -1
         self.pad_input = TransformationGenerator(output_size=self.sax_img_size,
                                              output_spacing=[1, 1, 1],
                                              training=False,
@@ -91,14 +103,14 @@ class MM(data.Dataset):
             self.num_parti = self.num_parti + 1
 
             # Reading all fundus images per patient
-            imgs_per_id = glob.glob(dir_imgs + 'fundus/' + str(int(ID[0]))[0:2] + 'xxxxx/' + str(int(ID[0])) + '/*.png')
+            imgs_per_id = glob.glob(dir_imgs + 'tagging/' + str(int(ID[0]))[0:2] + 'xxxxx/' + str(int(ID[0])) + '/*.nii')
 
             # Taking only one image orientation -> left/right
             img_21015 = [j for j in imgs_per_id if '21016' in j]
             if len(img_21015) >= 1:
                 imgs_per_id = img_21015[0]
                 # path for fundus images
-                self.path_imgs_fundus.append(imgs_per_id)
+                self.path_imgs_tagging.append(imgs_per_id)
                 # Image names
                 self.img_names.append(imgs_per_id.split('/')[-1][:-4])
                 # paths for cmr
@@ -146,15 +158,17 @@ class MM(data.Dataset):
             #     self.mtdt.append([ID[6], ID[10], ID[24],  ID[30], ID[31], ID[33], ID[34], ID[36], ID[38], ID[40], ID[41], ID[43]])
             
             # Transform for fundus images
-        self.transform_fundus = transforms.Compose([
-                transforms.Resize((self.fundus_img_size, self.fundus_img_size)),
-                transforms.ToTensor(),
-            ])
+# =============================================================================
+#         self.transform_fundus = transforms.Compose([
+#                 transforms.Resize((self.tagging_img_size, self.tagging_img_size)),
+#                 transforms.ToTensor(),
+#             ])
+# =============================================================================
 
 
     # Denotes the total number of samples
     def __len__(self):
-        return len(self.path_imgs_fundus) # self.num_parti
+        return len(self.path_imgs_tagging) # self.num_parti
 
     # This generates one sample of data
     def __getitem__(self, index):
@@ -168,15 +182,23 @@ class MM(data.Dataset):
         
         # Loading fundus image
         # preprocessing
-        fundus = load_preprocess_img(self.path_imgs_fundus[index])
-        # without preprocessing
-        # fundus = Image.open(self.path_imgs_fundus[index]).convert('RGB')
-        # resizing the images
-        fundus_image = self.transform_fundus(fundus)
-        # normalizing the images
-        fundus_image = (fundus_image - torch.min(fundus_image))/(torch.max(fundus_image) - torch.min(fundus_image)) # Normalize between 0 and 1
-        # fundus_image = 2.0*(fundus_image - torch.min(fundus_image))/(torch.max(fundus_image) - torch.min(fundus_image))-1.0  # Normalize between -1 and 1
-
+# =============================================================================
+#         tagging = load_preprocess_img(self.path_imgs_tagging[index])
+#         # without preprocessing
+#         tagging = Image.open(self.path_imgs_tagging[index]).convert('RGB')
+#         # resizing the images
+#         tagging_image = self.transform_fundus(tagging)
+#         # normalizing the images
+#         tagging_image = (tagging_image - torch.min(tagging_image))/(torch.max(tagging_image) - torch.min(tagging_image)) # Normalize between 0 and 1
+#         tagging_image = 2.0*(tagging_image - torch.min(tagging_image))/(torch.max(tagging_image) - torch.min(tagging_image))-1.0  # Normalize between -1 and 1
+# =============================================================================
+        tagging = self.pad_input_tagging.get(self.path_imgs_tagging[index],
+                                    self.crop_c_min[index],
+                                    self.crop_c_max[index],
+                                    self.crop_r_min[index],
+                                    self.crop_r_max[index],
+                                    self.roi_length[index])       
+        
         # Loading sax
         sax = self.pad_input.get(self.path_imgs_sax[index],
                                     self.crop_c_min[index],
@@ -186,12 +208,12 @@ class MM(data.Dataset):
                                     self.roi_length[index])
 
 
-        return fundus_image, sax, torch.FloatTensor(self.mtdt[index]), self.img_names[index] # index  # torch.FloatTensor(self.mtdt[index])
+        return tagging, sax,  self.img_names[index] # index  # torch.FloatTensor(self.mtdt[index])
         #return sax, torch.FloatTensor(self.mtdt[index]), self.img_names[index] # index  # torch.FloatTensor(self.mtdt[index])
 
 
-def MM_loader(batch_size,
-              fundus_img_size,
+def TC_loader(batch_size,
+              tagging_img_size,
               sax_img_size,
               num_workers,
               shuffle,
@@ -201,15 +223,15 @@ def MM_loader(batch_size,
 
 
     ######### Create class Dataset MM ########
-    MM_dataset = MM(dir_imgs = dir_imgs,
-                    fundus_img_size = fundus_img_size,
+    TC_dataset = TC(dir_imgs = dir_imgs,
+                    tagging_img_size = tagging_img_size,
 		            sax_img_size = sax_img_size,
                     args = args,
                     ids_set = ids_set)
 
-    print('Found ' + str(len(MM_dataset)) + ' fundus images')
+    print('Found ' + str(len(TC_dataset)) + ' tagging images')
 
     # Dataloader
-    data_loader = torch.utils.data.DataLoader(MM_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    data_loader = torch.utils.data.DataLoader(TC_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     return data_loader

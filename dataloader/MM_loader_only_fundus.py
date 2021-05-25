@@ -72,7 +72,7 @@ class MM(data.Dataset):
                 self.img_names.append(imgs_per_id.split('/')[-1][:-4].split('_')[0])
 
                 # labels LVEDV_automatic[6], LVM_automatic[10]
-                self.labels.append([ID[6], ID[10]])
+                self.labels.append([ID[6], ID[7]])
             else:
                 continue
 
