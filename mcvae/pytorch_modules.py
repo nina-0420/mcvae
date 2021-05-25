@@ -230,11 +230,11 @@ class MultiChannelBase(torch.nn.Module):
 
 			# Fundus/CMR implementation
 			if ch == 'fundus':
-				print('\n' + ch + ' encoder loaded')
+				# print('\n' + ch + ' encoder loaded')
 				W_mu.append(torch.nn.DataParallel(encoder_fundus(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 				W_logvar.append(torch.nn.DataParallel(encoder_fundus(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 			elif ch == 'cmr':
-				print('\n' + ch + ' encoder loaded')
+				# print('\n' + ch + ' encoder loaded')
 				W_mu.append(torch.nn.DataParallel(encoder_cmr(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 				W_logvar.append(torch.nn.DataParallel(encoder_cmr(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 
@@ -384,8 +384,8 @@ class MultiChannelBase(torch.nn.Module):
 					local_batch = []
 					for idx in range(len(gen_batch)-2): # All data except metadata and img_names
 						local_batch.append(gen_batch[idx].type(dtype))
-					print("\nBatch # {} / {}".format(current_batch, len(data) - 1), end='\t')
-					print(gen_batch[idx+1]) # print batch img names
+					# print("\nBatch # {} / {}".format(current_batch, len(data) - 1), end='\t')
+					# print(gen_batch[idx+1]) # print batch img names
 					loss = self.optimize_batch(local_batch)
 					current_batch += 1
 			else:
@@ -537,10 +537,10 @@ class MultiChannelSparseVAE(MultiChannelBase):
 
 			# Fundus/CMR implementation
 			if ch == 'fundus':
-				print('\n' + ch + ' encoder loaded')
+				# print('\n' + ch + ' encoder loaded')
 				W_mu.append(torch.nn.DataParallel(encoder_fundus(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 			elif ch == 'cmr':
-				print('\n' + ch + ' encoder loaded')
+				# print('\n' + ch + ' encoder loaded')
 				W_mu.append(torch.nn.DataParallel(encoder_cmr(self.n_feats[ch][0], self.n_feats[ch][1], self.lat_dim)))
 
 		self.W_mu = torch.nn.ModuleList(W_mu).apply(self.weights_init_normal)
